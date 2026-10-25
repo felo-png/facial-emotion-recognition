@@ -33,8 +33,7 @@ try:
         model = load_model()
     st.success("تم تحميل النموذج بنجاح!")
 except Exception as e:
-    st.error(f"حدث خطأ أثناء تحميل النموذج: {e}")
-
+     st.error(f"حدث خطأ أثناء تحميل النموذج: {e}")
 # أسماء المشاعر
 class_names = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
