@@ -5,7 +5,7 @@ from PIL import Image
 import torch.nn as nn
 from torchvision import models
 import os
-import urllib.request
+import gdown
 
 # ضبط إعدادات الصفحة
 st.set_page_config(page_title="Facial Emotion Recognition", page_icon="🎭")
@@ -13,24 +13,20 @@ st.set_page_config(page_title="Facial Emotion Recognition", page_icon="🎭")
 st.title("🎭 Facial Emotion Recognition")
 st.write("قم برفع صورة لوجه للتعرف على الانفعال المعبر عنه.")
 
-# تحميل النموذج من رابط مباشر ثابت
+# تحميل النموذج
 @st.cache_resource
 def load_model():
     model_path = 'best_emotion_resnet18.pth'
     
-    # لو الملف قديم أو مساحته صغيرة (تالف)، هنحذفه وننزله صح
-    if os.path.exists(model_path) and os.path.getsize(model_path) < 10000000:
+    # لو الملف غير موجود أو تالف (أقل من 40 ميجا)، احذفه ونزله صح
+    if os.path.exists(model_path) and os.path.getsize(model_path) < 40000000:
         os.remove(model_path)
         
     if not os.path.exists(model_path):
-        # رابط تنزيل مباشر ومستقر جداً
-        url = 'https://huggingface.co/timm/resnet18.a1_in1k/resolve/main/model.safetensors' # سنستخدم التنزيل المباشر المضمون
-        
-        # باستخدام urllib للتحميل المباشر
-        req = urllib.request.Request(
-            'https://github.com/m-aly/facial-emotion-recognition/releases/download/v1.0/best_emotion_resnet18.pth', 
-            headers={'User-Agent': 'Mozilla/5.0'}
-        )
+        file_id = '1K1UgkDu0lpdVWFJbLRwxpmbxqqPawuHb'
+        # رابط تنزيل مباشر يطوف صفحة التأكيد
+        url = f'https://drive.google.com/uc?export=download&id={file_id}'
+        gdown.download(url, model_path, quiet=False)
         
     model = models.resnet18(weights=None)
     num_ftrs = model.fc.in_features
@@ -41,3 +37,43 @@ def load_model():
     model.load_state_dict(state_dict)
     model.eval()
     return model
+
+# محاولة تحميل النموذج
+model = None
+try:
+    with st.spinner("جاري تحميل النموذج (قد يستغرق دقيقة في المرة الأولى)..."):
+        model = load_model()
+    st.success("تم تحميل النموذج بنجاح!")
+except Exception as e:
+    st.error(f"حدث خطأ أثناء تحميل النموذج: {e}")
+
+# أسماء المشاعر
+class_names = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
+
+# زر رفع الصورة (موجود دائماً)
+uploaded_file = st.file_uploader("اختر صورة...", type=["jpg", "jpeg", "png"])
+
+if uploaded_file is not None:
+    image = Image.open(uploaded_file).convert('RGB')
+    st.image(image, caption='الصورة المرفوعة', use_column_width=True)
+    
+    if model is not None:
+        transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+        
+        input_tensor = transform(image).unsqueeze(0)
+        
+        with st.spinner('جاري التحليل...'):
+            with torch.no_grad():
+                outputs = model(input_tensor)
+                _, preds = torch.max(outputs, 1)
+                probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
+                
+            emotion = class_names[preds[0]]
+            confidence = probabilities[preds[0]].item() * 100
+            
+            st.subheader(f"الانفعال المتوقع: **{emotion}**")
+            st.write(f"نسبة الثقة
