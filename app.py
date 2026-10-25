@@ -5,6 +5,7 @@ from PIL import Image
 import torch.nn as nn
 from torchvision import models
 import os
+import gdown
 
 # ضبط إعدادات الصفحة
 st.set_page_config(page_title="Facial Emotion Recognition", page_icon="🎭")
@@ -12,12 +13,16 @@ st.set_page_config(page_title="Facial Emotion Recognition", page_icon="🎭")
 st.title("🎭 Facial Emotion Recognition")
 st.write("قم برفع صورة لوجه للتعرف على الانفعال المعبر عنه.")
 
-# تحميل النموذج
+# تحميل النموذج من Google Drive تلقائياً
 @st.cache_resource
 def load_model():
     model_path = 'best_emotion_resnet18.pth'
+    
+    # تنزيل الملف إذا لم يكن موجوداً
     if not os.path.exists(model_path):
-        raise FileNotFoundError(f"لم يتم العثور على الملف {model_path} في المستودع!")
+        file_id = '1K1UgkDu0lpdVWFJbLRwxpmbxqqPawuHb'
+        url = f'https://drive.google.com/uc?id={file_id}'
+        gdown.download(url, model_path, quiet=False)
         
     model = models.resnet18(weights=None)
     num_ftrs = model.fc.in_features
@@ -32,7 +37,7 @@ def load_model():
 # محاولة تحميل النموذج
 model = None
 try:
-    with st.spinner("جاري تحميل النموذج..."):
+    with st.spinner("جاري تحميل النموذج (قد يستغرق لحظات في المرة الأولى)..."):
         model = load_model()
     st.success("تم تحميل النموذج بنجاح!")
 except Exception as e:
