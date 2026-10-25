@@ -13,16 +13,17 @@ st.set_page_config(page_title="Facial Emotion Recognition", page_icon="🎭")
 st.title("🎭 Facial Emotion Recognition")
 st.write("قم برفع صورة لوجه للتعرف على الانفعال المعبر عنه.")
 
-# تحميل النموذج من Google Drive تلقائياً
+# تحميل النموذج من Google Drive برابط مباشر
 @st.cache_resource
 def load_model():
     model_path = 'best_emotion_resnet18.pth'
     
-    # تنزيل الملف إذا لم يكن موجوداً
-    if not os.path.exists(model_path):
+    # تنزيل الملف إذا لم يكن موجوداً أو كان بحجم غير صحيح
+    if not os.path.exists(model_path) or os.path.getsize(model_path) < 1000000:
         file_id = '1K1UgkDu0lpdVWFJbLRwxpmbxqqPawuHb'
-        url = f'https://drive.google.com/uc?id={file_id}'
-        gdown.download(url, model_path, quiet=False)
+        # استخدام رابط التنزيل المباشر لتجاوز صفحة المعاينة
+        url = f'https://drive.google.com/uc?export=download&id={file_id}'
+        gdown.download(url, model_path, quiet=False, fuzzy=True)
         
     model = models.resnet18(weights=None)
     num_ftrs = model.fc.in_features
@@ -37,7 +38,7 @@ def load_model():
 # محاولة تحميل النموذج
 model = None
 try:
-    with st.spinner("جاري تحميل النموذج (قد يستغرق لحظات في المرة الأولى)..."):
+    with st.spinner("جاري تحميل النموذج من Google Drive (قد يستغرق دقيقة في المرة الأولى)..."):
         model = load_model()
     st.success("تم تحميل النموذج بنجاح!")
 except Exception as e:
