@@ -24,7 +24,6 @@ def load_model():
         
     if not os.path.exists(model_path):
         file_id = '1K1UgkDu0lpdVWFJbLRwxpmbxqqPawuHb'
-        # رابط تنزيل مباشر يطوف صفحة التأكيد
         url = f'https://drive.google.com/uc?export=download&id={file_id}'
         gdown.download(url, model_path, quiet=False)
         
@@ -50,7 +49,7 @@ except Exception as e:
 # أسماء المشاعر
 class_names = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
-# زر رفع الصورة (موجود دائماً)
+# زر رفع الصورة
 uploaded_file = st.file_uploader("اختر صورة...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
@@ -75,5 +74,7 @@ if uploaded_file is not None:
             emotion = class_names[preds[0]]
             confidence = probabilities[preds[0]].item() * 100
             
-            st.subheader(f"الانفعال المتوقع: **{emotion}**")
-            st.write(f"نسبة الثقة
+            st.subheader(f"الانفعال المتوقع: {emotion}")
+            st.write(f"نسبة الثقة: {confidence:.2f}%")
+    else:
+        st.warning("تعذر تحليل الصورة لأن النموذج لم يتم تحميله بنجاح.")
